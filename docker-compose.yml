@@ -33,6 +33,11 @@ services:
       JWT_SECRET: ${JWT_SECRET:-water-triage-development-only}
       SEED_DEMO: ${SEED_DEMO:-true}
       ARTIFACT_DIR: /artifacts
+      STATION_URL: http://station:8010
+      STATION_TIMEOUT: ${STATION_TIMEOUT:-4}
+      STATION_DRILL_TOKEN: ${STATION_DRILL_TOKEN:-station-drill-token}
+      STATION_RETRY_BASE: ${STATION_RETRY_BASE:-30}
+      STATION_VERIFY_DEADLINE: ${STATION_VERIFY_DEADLINE:-86400}
     ports: ["${BACKEND_PORT:-19208}:8000"]
     volumes: ["analysis-artifacts:/artifacts"]
     depends_on:
@@ -59,6 +64,22 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+  station:
+    build: ./backend
+    container_name: ${COMPOSE_PROJECT_NAME:-water-triage}-station
+    command: ["uvicorn","src.station.app:app","--host","0.0.0.0","--port","8010"]
+    environment:
+      STATION_INBOX: /station-inbox
+      STATION_DRILL_TOKEN: ${STATION_DRILL_TOKEN:-station-drill-token}
+      STATION_SLOW_DELAY: ${STATION_SLOW_DELAY:-6}
+    ports: ["${STATION_PORT:-19308}:8010"]
+    volumes: ["station-inbox:/station-inbox"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/health')"]
+      interval: 4s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
   frontend:
     build: ./frontend
     container_name: ${COMPOSE_PROJECT_NAME:-water-triage}-frontend
@@ -74,3 +95,4 @@ volumes:
   db-data:
   redis-data:
   analysis-artifacts:
+  station-inbox:

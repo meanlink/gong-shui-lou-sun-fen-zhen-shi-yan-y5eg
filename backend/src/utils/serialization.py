@@ -9,3 +9,8 @@ def report_dict(r):
     return {k:getattr(r,k) for k in ['id','name','job_id','destination','interval_seconds','next_run','enabled']}
 def delivery_dict(d):
     return {k:getattr(d,k) for k in ['id','report_id','created_at','checksum','filename','destination']}
+def dispatch_dict(d, include_content=False):
+    payload={k:getattr(d,k) for k in ['id','report_id','sequence','number','status','checksum',
+        'attempts','last_error','receipt_id','delivered_at','created_at','next_check','updated_at']}
+    if include_content:payload['content']=d.content
+    return payload
